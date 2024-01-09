@@ -1,6 +1,10 @@
 from itertools import combinations
 from collections import defaultdict
-
+from scipy.spatial import Delaunay
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+# Parte 1 y 3
 class ComplejoSimplicial:
     def __init__(self):
         """
@@ -160,6 +164,83 @@ class ComplejoSimplicial:
             if filtracion <= valor_filtracion:
                 subcomplejo.añadir_simplex(simplex, filtracion)
         return subcomplejo
+    def calcular_matriz_borde(self, dimension):
+        # Crear listas de símplices por dimensión
+        simplices_d = list(self.caras_por_dimension(dimension))
+        simplices_d_minus_1 = list(self.caras_por_dimension(dimension-1))
+
+        # Crear la matriz borde
+        matriz_borde = np.zeros((len(simplices_d_minus_1), len(simplices_d)), dtype=int)
+
+        # Rellenar la matriz borde
+        for j, simplex in enumerate(simplices_d):
+            for i, sub_simplex in enumerate(simplices_d_minus_1):
+                if sub_simplex.issubset(simplex):
+                    matriz_borde[i, j] = 1
+
+        return matriz_borde
+    def calcular_matriz_borde_generalizada(self):
+        """
+        Calcula la matriz borde generalizada para un complejo simplicial filtrado.
+
+        :return: Una matriz que representa la relación borde entre símplices en diferentes dimensiones, teniendo en cuenta la filtración.
+        """
+        # Ordenar símplices por filtración y dimensión
+        self.simplices.sort(key=lambda x: (x[1], len(x[0])))
+
+        # Crear listas de símplices organizadas por dimensión y filtración
+        simplices_organizados = defaultdict(list)
+        for simplex, filtracion in self.simplices:
+            dim = len(simplex) - 1
+            simplices_organizados[dim].append((simplex, filtracion))
+
+        # Determinar el número máximo de dimensiones
+        max_dim = max(simplices_organizados.keys())
+
+        # Crear la matriz borde generalizada
+        bordes = []
+        for dim in range(1, max_dim + 1):
+            fila = []
+            for simplex_d, filtracion_d in simplices_organizados[dim]:
+                columna = []
+                for simplex_d_minus_1, filtracion_d_minus_1 in simplices_organizados[dim - 1]:
+                    if simplex_d_minus_1.issubset(simplex_d) and filtracion_d_minus_1 <= filtracion_d:
+                        columna.append(1)
+                    else:
+                        columna.append(0)
+                fila.append(columna)
+            bordes.append(fila)
+
+        return bordes
+
+    def calcular_numeros_betti(self):
+        """
+        Calcula los números de Betti para cada dimensión del complejo simplicial.
+
+        :return: Lista con los números de Betti.
+        """
+        max_dim = self.calcular_dimension()
+        betti_numbers = []
+
+        # Inicializar rangos de las matrices bordes con 0
+        rangos_bordes = [0]
+
+        # Calcular rangos de las matrices bordes para todas las dimensiones
+        for dim in range(max_dim + 1):
+            matriz_borde = self.calcular_matriz_borde(dim)
+            rango_borde = np.linalg.matrix_rank(matriz_borde) if matriz_borde.size > 0 else 0
+            rangos_bordes.append(rango_borde)
+
+        # Calcular los números de Betti usando los rangos de las matrices bordes
+        for dim in range(max_dim + 1):
+            num_simplices_dim_actual = len(self.caras_por_dimension(dim))
+            betti_num = num_simplices_dim_actual - rangos_bordes[dim]
+            if dim < max_dim:
+                betti_num -= rangos_bordes[dim + 1]
+            betti_numbers.append(betti_num)
+
+        return betti_numbers
+
     # Métodos adicionales (obtener_caras, caras_por_dimension, estrella, link, caracteristica_euler,
     # numero_componentes_conexas, ordenamiento, subcomplejo_por_filtracion) se implementarían aquí.
 
@@ -194,14 +275,26 @@ subcomplejo = complejo.subcomplejo_por_filtracion(valor_filtracion)
 simplices_en_subcomplejo = [simplex for simplex, _ in subcomplejo.simplices]
 print('Los simplices del subcomplejo para un valor de filtración de 0.5 es:', simplices_en_subcomplejo)
 
+# Ejemplo para matriz de borde
+complejo2 = ComplejoSimplicial()
+complejo2.añadir_simplex({0, 1}, 0.1)
+complejo2.añadir_simplex({1, 2}, 0.1)
+complejo2.añadir_simplex({2, 3}, 0.1)
+complejo2.añadir_simplex({0, 3}, 0.1)
+complejo2.añadir_simplex({0, 2}, 0.1)
+complejo2.añadir_simplex({1, 3}, 0.1)
+complejo2.añadir_simplex({0, 1, 2}, 0.2)
+complejo2.añadir_simplex({0, 2, 3}, 0.2)
+
+matriz_borde_0 = complejo2.calcular_matriz_borde(1)
+matriz_borde_1 = complejo2.calcular_matriz_borde(2)
+
+print("Matriz borde de dimensión 0 a 1:\n", matriz_borde_0)
+print("Matriz borde de dimensión 1 a 2:\n", matriz_borde_1)
 
 ##################################################################
 # Practica 2
 
-from scipy.spatial import Delaunay
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.tri as tri
 
 class AlfaComplejo:
     def __init__(self, puntos):
@@ -291,6 +384,7 @@ print('las filtraciones para diferentes r para los puntos [(1, 2), (3, 4), (5, 6
 alfa_complejo.representar_graficamente(2)
 
 from scipy.spatial.distance import pdist, squareform
+
 class Complejosimplicial2:
     def __init__(self, puntos):
         self.puntos = np.array(puntos)
@@ -322,3 +416,210 @@ print('la filtracion de vieto-rips para el conjunto de puntos [[0, 0], [1, 0], [
 ##############################################################
 # Práctica 3: Homología Simplicial
 
+
+def forma_normal_smith_z2(matriz):
+    M = np.array(matriz, dtype=np.int64) % 2  # Asegurar que la matriz esté en Z2
+    filas, columnas = M.shape
+
+    for i in range(min(filas, columnas)):
+        # Encontrar un elemento no nulo en la columna i y moverlo a la posición (i, i)
+        for j in range(i, filas):
+            if M[j, i] == 1:
+                # Intercambiar filas si es necesario
+                if j != i:
+                    M[[i, j]] = M[[j, i]]
+                break
+        else:
+            continue  # Continuar si no se encontró ningún elemento no nulo
+        
+        # Hacer cero todos los elementos fuera de la diagonal con operaciones de fila y columna
+        for j in range(filas):
+            if j != i and M[j, i] == 1:
+                M[j] = (M[j] + M[i]) % 2
+        for k in range(columnas):
+            if k != i and M[i, k] == 1:
+                M[:, k] = (M[:, k] + M[:, i]) % 2
+    
+    return M
+
+# Ejemplo de uso:
+matriz_ejemplo = [
+    [1, 1, 0],
+    [0, 1, 1],
+    [1, 0, 1]
+]
+
+forma_normal_smith = forma_normal_smith_z2(matriz_ejemplo)
+print("La forma normal de Smith de la matriz es:\n", forma_normal_smith)
+
+### Calculo de los numeros de Betti 
+
+## Para el tetraedro
+complejo_tetraedro = ComplejoSimplicial()
+
+# Añadir vértices (0-simplices)
+for v in range(1, 5):
+    complejo_tetraedro.añadir_simplex({v}, filtracion=0)
+
+# Añadir aristas (1-simplices)
+aristas = [{1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}]
+for arista in aristas:
+    complejo_tetraedro.añadir_simplex(arista, filtracion=1)
+
+# Añadir caras (2-simplices)
+caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
+for cara in caras:
+    complejo_tetraedro.añadir_simplex(cara, filtracion=2)
+
+# Calcular y mostrar los números de Betti
+numeros_betti_tetraedro = complejo_tetraedro.calcular_numeros_betti()
+print("Números de Betti del tetraedro:", numeros_betti_tetraedro)
+
+## Para el borde del tetraedro
+complejo_borde_tetraedro = ComplejoSimplicial()
+
+# Añadir vértices (0-simplices)
+for v in range(1, 5):
+    complejo_borde_tetraedro.añadir_simplex({v}, filtracion=0)
+
+# Añadir aristas (1-simplices)
+aristas = [{1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}]
+for arista in aristas:
+    complejo_borde_tetraedro.añadir_simplex(arista, filtracion=1)
+
+# Añadir caras (2-simplices)
+caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
+for cara in caras:
+    complejo_borde_tetraedro.añadir_simplex(cara, filtracion=2)
+
+# Calcular y mostrar los números de Betti
+numeros_betti_borde_tetraedro = complejo_borde_tetraedro.calcular_numeros_betti()
+print("Números de Betti del borde del tetraedro:", numeros_betti_borde_tetraedro)
+
+
+## Para el plano proyectivo
+complejo_plano_proyectivo = ComplejoSimplicial()
+
+# Añadir vértices (0-simplices)
+for v in range(1, 3):
+    complejo_plano_proyectivo.añadir_simplex({v}, filtracion=0)
+
+# Añadir aristas (1-simplices)
+aristas = [{1, 2}]
+for arista in aristas:
+    complejo_plano_proyectivo.añadir_simplex(arista, filtracion=1)
+
+# Añadir el 2-simplex (cara)
+complejo_plano_proyectivo.añadir_simplex({1, 2}, filtracion=2)
+
+# Calcular y mostrar los números de Betti
+numeros_betti_plano_proyectivo = complejo_plano_proyectivo.calcular_numeros_betti()
+print("Números de Betti del plano proyectivo:", numeros_betti_plano_proyectivo)
+
+
+## Para la botella de Klein
+complejo_botella_klein = ComplejoSimplicial()
+
+# Añadir vértices (0-simplices)
+for v in range(1, 5):
+    complejo_botella_klein.añadir_simplex({v}, filtracion=0)
+
+# Añadir aristas (1-simplices)
+aristas = [{1, 2}, {2, 3}, {3, 4}, {4, 1}, {1, 3}, {2, 4}]
+for arista in aristas:
+    complejo_botella_klein.añadir_simplex(arista, filtracion=1)
+
+# Añadir caras (2-simplices)
+caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
+for cara in caras:
+    complejo_botella_klein.añadir_simplex(cara, filtracion=2)
+
+# Añadir el 3-simplex (volumen)
+complejo_botella_klein.añadir_simplex({1, 2, 3, 4}, filtracion=3)
+
+# Calcular y mostrar los números de Betti
+numeros_betti_botella_klein = complejo_botella_klein.calcular_numeros_betti()
+print("Números de Betti de la botella de Klein:", numeros_betti_botella_klein)
+
+
+
+###########################
+## Practica 4
+
+# Ejemplo de matriz de borde generalizada para un complejo simplicial
+
+# Crear una instancia de ComplejoSimplicial
+complejo_ = ComplejoSimplicial()
+
+# Añadir algunos símplices con valores de filtración
+complejo_.añadir_simplex({1}, 0.1)  # vértice
+complejo_.añadir_simplex({2}, 0.2)  # vértice
+complejo_.añadir_simplex({3}, 0.3)  # vértice
+complejo_.añadir_simplex({1, 2}, 0.4)  # arista
+complejo_.añadir_simplex({2, 3}, 0.5)  # arista
+complejo_.añadir_simplex({1, 3}, 0.6)  # arista
+complejo_.añadir_simplex({1, 2, 3}, 0.7)  # triángulo
+
+# Calcular y mostrar la matriz borde generalizada
+matriz_borde_generalizada = complejo_.calcular_matriz_borde_generalizada()
+for fila in matriz_borde_generalizada:
+    for columna in fila:
+        print(columna)
+    print("\n")
+
+# Función para calular el low de la columna de una matriz
+
+def calcular_low_columna(matriz, columna_index):
+    """
+    Calcula el 'low' de una columna específica en una matriz de NumPy.
+
+    :param matriz: Matriz de NumPy.
+    :param columna_index: Índice de la columna para calcular el 'low'.
+    :return: Índice de la fila más baja con un valor no nulo, o -1 si la columna es cero.
+    """
+    # Revisar si la columna es completamente cero
+    if np.all(matriz[:, columna_index] == 0):
+        return -1
+
+    # Encontrar el índice de la fila más baja con un valor no nulo
+    filas_no_cero = np.where(matriz[:, columna_index] != 0)[0]
+    return max(filas_no_cero)
+
+# Ejemplo de uso:
+matriz_ejemplo = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]])
+columna_index = 2  # Por ejemplo, elige la tercera columna
+low = calcular_low_columna(matriz_ejemplo, columna_index)
+print(f"El 'low' de la columna {columna_index} es: {low}")
+
+# Reducción por columnas una matriz cuadrada según el algoritmo matricula de cálculo de persistencia.
+
+
+def reducir_matriz(matriz):
+    """
+    Reduce una matriz cuadrada según el algoritmo de cálculo de persistencia.
+
+    :param matriz: Matriz de NumPy a reducir.
+    :return: Matriz reducida.
+    """
+    num_columnas = matriz.shape[1]
+    lows = [-1] * num_columnas  # Inicializa todos los 'lows' como -1
+
+    for j in range(num_columnas):
+        while True:
+            low_j = calcular_low_columna(matriz, j)
+            if low_j == -1:
+                break  # Si la columna es cero, no hay nada que reducir
+
+            if lows[low_j] == -1:
+                lows[low_j] = j  # Actualiza el 'low' de la fila
+                break
+            else:
+                q = lows[low_j]
+                matriz[:, j] = matriz[:, j] ^ matriz[:, q]  # Operación XOR para la reducción
+
+    return matriz
+
+# Ejemplo de uso
+matriz_ejemplo = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]], dtype=int)
+matriz_reducida = reducir_matriz(matriz_ejemplo)
+matriz_reducida
