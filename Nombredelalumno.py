@@ -4,6 +4,7 @@ from scipy.spatial import Delaunay
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+import gudhi as gd 
 # Parte 1 y 3
 class ComplejoSimplicial:
     def __init__(self):
@@ -622,4 +623,74 @@ def reducir_matriz(matriz):
 # Ejemplo de uso
 matriz_ejemplo = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]], dtype=int)
 matriz_reducida = reducir_matriz(matriz_ejemplo)
-matriz_reducida
+print(f'La matriz del ejemplo reducida es:\n{matriz_reducida}')
+
+# Definición de la función calcular_diagrama_persistencia
+def calcular_diagrama_persistencia(puntos, max_r, paso_r):
+    alfa_complejo = AlfaComplejo(puntos)
+    filtraciones = []
+    for r in np.arange(0, max_r, paso_r):
+        filtraciones.append((r, alfa_complejo.calcular_filtracion_alfa(r)))
+    st = gd.SimplexTree()
+    for r, filtracion in filtraciones:
+        for simplex in filtracion:
+            st.insert(simplex, r)
+    return st.persistence()
+
+# Definición de la función dibujar_diagrama_persistencia
+def dibujar_diagrama_persistencia(diagrama, ax):
+    nacimientos = [p[1][0] for p in diagrama if p[1][1] != float('inf')]
+    muertes = [p[1][1] for p in diagrama if p[1][1] != float('inf')]
+    ax.scatter(nacimientos, muertes)
+    ax.plot([0, max(muertes)], [0, max(muertes)], 'k--')
+    ax.set_xlabel('Nacimiento')
+    ax.set_ylabel('Muerte')
+    ax.set_title('Diagrama de Persistencia')
+
+# Definición de la función dibujar_codigos_de_barras
+def dibujar_codigos_de_barras(diagrama, ax):
+    numero_de_caracteristicas = len(diagrama)
+    for i, (dim, (nacimiento, muerte)) in enumerate(diagrama):
+        if muerte == float('inf'):
+            muerte = max([n for d, (n, m) in diagrama if m != float('inf')])
+        ax.plot([nacimiento, muerte], [i, i], 'b')
+    ax.set_xlabel('Valor de filtración')
+    ax.set_ylabel('Características')
+    ax.set_title('Códigos de Barras')
+    # Ajustar etiquetas en el eje y para que haya 7 correctamente espaciadas
+    ax.set_yticks(np.linspace(0, numero_de_caracteristicas - 1, 7))
+    ax.set_ylim(-1, numero_de_caracteristicas)
+
+# Generar puntos para diferentes curvas (circunferencia, figura ocho, elipse)
+theta = np.linspace(0, 2*np.pi, 100)
+
+# Circunferencia
+circunferencia = np.array([[np.cos(t), np.sin(t)] for t in theta])
+
+# Figura ocho
+figura_ocho = np.array([[np.sin(t), np.sin(t) * np.cos(t)] for t in theta])
+
+# Elipse
+elipse = np.array([[2*np.cos(t), np.sin(t)] for t in theta])
+
+# Función para visualizar cada curva, su diagrama de persistencia y códigos de barras
+def visualizar_curva_y_analisis(curva, titulo):
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+
+    # Dibujar la curva
+    axs[0].plot(curva[:, 0], curva[:, 1])
+    axs[0].set_title(titulo)
+    axs[0].set_aspect('equal')
+
+    # Calcular y dibujar diagrama de persistencia y códigos de barras
+    diagrama = calcular_diagrama_persistencia(curva, max_r=2.0, paso_r=0.1)
+    dibujar_diagrama_persistencia(diagrama, axs[1])
+    dibujar_codigos_de_barras(diagrama, axs[2])
+
+    plt.tight_layout()
+    plt.show()
+
+# Visualizar cada curva con su análisis
+visualizar_curva_y_analisis(circunferencia, "Circunferencia")
+visualizar_curva_y_analisis(figura_ocho, "Figura Ocho")
+visualizar_curva_y_analisis(elipse, "Elipse")
