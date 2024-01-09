@@ -568,6 +568,96 @@ print("\nNúmeros de Betti del primer alfa complejo:", betti_numbers_alfa1)
 betti_numbers_alfa2 = alfa_complejo2.calcular_numeros_betti()
 print("\nNúmeros de Betti del segundo alfa complejo:", betti_numbers_alfa2)
 
+## Numeros de Betti con el algoritmo incremental
+def calcular_numeros_betti(simplices):
+    """
+    Calcular los números de Betti b0 y b1 para un complejo simplicial en el plano utilizando el algoritmo incremental.
+
+    Parámetros:
+    simplices (lista de tuplas): Lista de símplices, donde cada símplice es una tupla de vértices.
+
+    Devuelve:
+    tupla: Una tupla que contiene los números de Betti b0 y b1.
+    """
+    # Inicialización de los números de Betti
+    b0 = 0  # Número de componentes conectadas
+    b1 = 0  # Número de agujeros unidimensionales (ciclos)
+
+    # Funciones auxiliares
+    def find_set(vertex, parent):
+        """
+        Encontrar el representante del conjunto que contiene el vértice dado.
+        Implementa la parte 'find' del algoritmo Union-Find.
+        """
+        if parent[vertex] != vertex:
+            parent[vertex] = find_set(parent[vertex], parent)
+        return parent[vertex]
+
+    def union_sets(u, v, parent, rank):
+        """
+        Fusionar los conjuntos que contienen u y v.
+        Implementa la parte 'union' del algoritmo Union-Find.
+        """
+        u_root = find_set(u, parent)
+        v_root = find_set(v, parent)
+
+        if u_root != v_root:
+            # Fusionar el conjunto más pequeño en el más grande para mantener el árbol poco profundo
+            if rank[u_root] < rank[v_root]:
+                parent[u_root] = v_root
+            elif rank[u_root] > rank[v_root]:
+                parent[v_root] = u_root
+            else:
+                parent[v_root] = u_root
+                rank[u_root] += 1
+            return True  # Indica que ocurrió una fusión
+        return False
+
+    # Extraer vértices de los símplices
+    vertices = set()
+    for simplex in simplices:
+        vertices.update(simplex)
+    
+    # Inicializar las estructuras de Union-Find
+    parent = {vertex: vertex for vertex in vertices}
+    rank = {vertex: 0 for vertex in vertices}
+
+    # Procesar cada símplice
+    for simplex in simplices:
+        if len(simplex) == 1:
+            b0 += 1  # Contar cada vértice como una nueva componente conectada
+        elif len(simplex) == 2:
+            # Si la arista conecta dos componentes previamente separadas, disminuir b0
+            if union_sets(simplex[0], simplex[1], parent, rank):
+                b0 -= 1
+            else:
+                # La arista forma un ciclo, aumentar b1
+                b1 += 1
+
+    return b0, b1
+
+
+
+# Definición de los complejos alpha
+
+# Primer complejo alpha: Un cuadrado con una diagonal
+# Vértices: 1, 2, 3, 4
+# Aristas: (1,2), (2,3), (3,4), (4,1), (1,3)
+alpha_complex_1 = [(1,), (2,), (3,), (4,), (1,2), (2,3), (3,4), (4,1), (1,3)]
+
+# Segundo complejo alpha: Dos triángulos separados
+# Vértices: 1, 2, 3, 4, 5, 6
+# Aristas: (1,2), (2,3), (3,1), (4,5), (5,6), (6,4)
+alpha_complex_2 = [(1,), (2,), (3,), (4,), (5,), (6,), 
+                   (1,2), (2,3), (3,1), (4,5), (5,6), (6,4)]
+
+# Calcular los números de Betti para ambos complejos
+b0_1, b1_1 = calcular_numeros_betti(alpha_complex_1)
+b0_2, b1_2 = calcular_numeros_betti(alpha_complex_2)
+
+print('Los números de Betti para los alpha complejos por el metodo de incremental:',(b0_1, b1_1), (b0_2, b1_2))
+
+
 ###########################
 ## Practica 4
 
