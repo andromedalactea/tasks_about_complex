@@ -7,6 +7,7 @@ import matplotlib.tri as tri
 import gudhi as gd 
 from scipy.spatial.distance import pdist, squareform
 
+#################################################
 # Practicas 1 y 3
 class ComplejoSimplicial:
     def __init__(self):
@@ -236,11 +237,11 @@ class ComplejoSimplicial:
         return st.betti_numbers()
 
 
-# Ejemplo de los primeros metodos de la clase
+# Ejemplos de los primeros metodos de la clase
 complejo = ComplejoSimplicial()
 complejo.añadir_simplex({1, 2, 3}, 0.4)
 complejo.añadir_simplex({2, 3, 4}, 0.45)
-complejo.añadir_simplex({1, 2}, 0.6)
+complejo.añadir_simplex({1, 2}, 0.6) # Añadiendo simplices
 
 # Convertir frozenset a listas para una mejor visualización
 todas_las_caras = [list(cara) for cara in complejo.obtener_todas_las_caras()]
@@ -265,7 +266,7 @@ print('\nla caracteristica de euler para el complejo simplicial es:', caracteris
 valor_filtracion = 0.5
 subcomplejo = complejo.subcomplejo_por_filtracion(valor_filtracion)
 simplices_en_subcomplejo = [simplex for simplex, _ in subcomplejo.simplices]
-print('Los simplices del subcomplejo para un valor de filtración de 0.5 es:', simplices_en_subcomplejo)
+print('\nLos simplices del subcomplejo para un valor de filtración de 0.5 es:', simplices_en_subcomplejo)
 
 # Ejemplo para matriz de borde
 complejo2 = ComplejoSimplicial()
@@ -281,12 +282,11 @@ complejo2.añadir_simplex({0, 2, 3}, 0.2)
 matriz_borde_0 = complejo2.calcular_matriz_borde(1)
 matriz_borde_1 = complejo2.calcular_matriz_borde(2)
 
-print("Matriz borde de dimensión 0 a 1:\n", matriz_borde_0)
-print("Matriz borde de dimensión 1 a 2:\n", matriz_borde_1)
+print("\nMatriz borde de dimensión 0 a 1:\n", matriz_borde_0)
+print("\nMatriz borde de dimensión 1 a 2:\n", matriz_borde_1)
 
 ##################################################################
 # Practica 2
-
 
 class AlfaComplejo:
     def __init__(self, puntos):
@@ -359,14 +359,14 @@ class AlfaComplejo:
         plt.close()
 
         
-# Ejemplo de uso:
+# Ejmeplo para los alfacomplejos coplanares:
 puntos = [(1, 2), (3, 4), (5, 6), (2, 5)]  # Conjunto de puntos del plano
 alfa_complejo = AlfaComplejo(puntos)
 
 # Valores de r para calcular la filtración
 valores_r = [-1, 0, 2]  # r negativo, r cero y r suficientemente grande
 
-# Intentamos calcular la filtración de alfa complejos nuevamente
+# Calcula la filtración de alfa complejos 
 filtraciones = {r: alfa_complejo.calcular_filtracion_alfa(r) for r in valores_r}
 filtraciones
 
@@ -525,7 +525,7 @@ anillo.añadir_simplex({0, 1, 3}, 0.3)
 
 # Calcular los números de Betti para el anillo
 betti_numbers_anillo = anillo.calcular_numeros_betti()
-print("Números de Betti del anillo:", betti_numbers_anillo)
+print("\nNúmeros de Betti del anillo:", betti_numbers_anillo)
 
 ## Para el sombrero del asno
 sombrero_asno = ComplejoSimplicial()
@@ -539,7 +539,7 @@ sombrero_asno.añadir_simplex({1, 2, 3}, 4)
 
 # Calcular los números de Betti para el sombrero del asno
 betti_numbers_sombrero_asno = sombrero_asno.calcular_numeros_betti()
-print("Números de Betti del sombrero del asno:", betti_numbers_sombrero_asno)
+print("\nNúmeros de Betti del sombrero del asno:", betti_numbers_sombrero_asno)
 
 ## Para los alfa complejos
 # Crear una instancia de ComplejoSimplicial para el primer alfa complejo
@@ -562,11 +562,11 @@ alfa_complejo2.añadir_simplex({2, 4}, 3)
 
 # Calcular los números de Betti para el primer alfa complejo
 betti_numbers_alfa1 = alfa_complejo1.calcular_numeros_betti()
-print("Números de Betti del primer alfa complejo:", betti_numbers_alfa1)
+print("\nNúmeros de Betti del primer alfa complejo:", betti_numbers_alfa1)
 
 # Calcular los números de Betti para el segundo alfa complejo
 betti_numbers_alfa2 = alfa_complejo2.calcular_numeros_betti()
-print("Números de Betti del segundo alfa complejo:", betti_numbers_alfa2)
+print("\nNúmeros de Betti del segundo alfa complejo:", betti_numbers_alfa2)
 
 ###########################
 ## Practica 4
@@ -612,8 +612,9 @@ def calcular_low_columna(matriz, columna_index):
 
 # Ejemplo de uso:
 matriz_ejemplo = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]])
-columna_index = 2  # Por ejemplo, elige la tercera columna
+columna_index = 2  # Para la tercera colummna
 low = calcular_low_columna(matriz_ejemplo, columna_index)
+print('Para la matriz\n',matriz_ejemplo)
 print(f"El 'low' de la columna {columna_index} es: {low}")
 
 
@@ -646,41 +647,68 @@ def reducir_matriz(matriz):
 # Ejemplo de uso
 matriz_ejemplo = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]], dtype=int)
 matriz_reducida = reducir_matriz(matriz_ejemplo)
-print(f'La matriz del ejemplo reducida es:\n{matriz_reducida}')
+print(f'\nLa matriz del ejemplo reducida es:\n{matriz_reducida}')
 
 # Definición de la función calcular_diagrama_persistencia
 def calcular_diagrama_persistencia(puntos, max_r, paso_r):
+    # Crear un objeto AlfaComplejo a partir de los puntos de entrada
     alfa_complejo = AlfaComplejo(puntos)
+    
+    # Inicializar una lista para almacenar las filtraciones
     filtraciones = []
+    
+    # Generar las filtraciones en intervalos de r desde 0 hasta max_r con paso_r
     for r in np.arange(0, max_r, paso_r):
         filtraciones.append((r, alfa_complejo.calcular_filtracion_alfa(r)))
+    
+    # Crear un objeto SimplexTree para representar el complejo simplicial filtrado
     st = gd.SimplexTree()
+    
+    # Insertar los símplices en el SimplexTree con sus respectivas filtraciones
     for r, filtracion in filtraciones:
         for simplex in filtracion:
             st.insert(simplex, r)
+    
+    # Calcular y devolver el diagrama de persistencia del complejo filtrado
     return st.persistence()
 
 # Definición de la función dibujar_diagrama_persistencia
 def dibujar_diagrama_persistencia(diagrama, ax):
+    # Extraer los nacimientos y muertes del diagrama de persistencia
     nacimientos = [p[1][0] for p in diagrama if p[1][1] != float('inf')]
     muertes = [p[1][1] for p in diagrama if p[1][1] != float('inf')]
+    
+    # Crear un gráfico de dispersión para visualizar los puntos de nacimiento y muerte
     ax.scatter(nacimientos, muertes)
+    
+    # Dibujar la línea diagonal punteada que representa la vida infinita
     ax.plot([0, max(muertes)], [0, max(muertes)], 'k--')
+    
+    # Configurar etiquetas y título del gráfico
     ax.set_xlabel('Nacimiento')
     ax.set_ylabel('Muerte')
     ax.set_title('Diagrama de Persistencia')
 
 # Definición de la función dibujar_codigos_de_barras
 def dibujar_codigos_de_barras(diagrama, ax):
+    # Obtener el número de características en el diagrama
     numero_de_caracteristicas = len(diagrama)
+    
+    # Recorrer el diagrama y dibujar los códigos de barras para cada característica
     for i, (dim, (nacimiento, muerte)) in enumerate(diagrama):
         if muerte == float('inf'):
+            # Si la muerte es infinita, establecerla como el máximo valor no infinito en el diagrama
             muerte = max([n for d, (n, m) in diagrama if m != float('inf')])
+        
+        # Dibujar un código de barras para la característica actual
         ax.plot([nacimiento, muerte], [i, i], 'b')
+    
+    # Configurar etiquetas y título del gráfico
     ax.set_xlabel('Valor de filtración')
     ax.set_ylabel('Características')
     ax.set_title('Códigos de Barras')
-    # Ajustar etiquetas en el eje y para que haya 7 correctamente espaciadas
+    
+    # Ajustar las etiquetas en el eje y para que estén correctamente espaciadas
     ax.set_yticks(np.linspace(0, numero_de_caracteristicas - 1, 7))
     ax.set_ylim(-1, numero_de_caracteristicas)
 
