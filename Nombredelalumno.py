@@ -272,6 +272,8 @@ class AlfaComplejo:
             plt.show()
 
         plt.close()
+
+        
 # Ejemplo de uso:
 puntos = [(1, 2), (3, 4), (5, 6), (2, 5)]  # Conjunto de puntos del plano
 alfa_complejo = AlfaComplejo(puntos)
@@ -287,3 +289,36 @@ print('las filtraciones para diferentes r para los puntos [(1, 2), (3, 4), (5, 6
 
 # Representación del alfa complejo 
 alfa_complejo.representar_graficamente(2)
+
+from scipy.spatial.distance import pdist, squareform
+class Complejosimplicial2:
+    def __init__(self, puntos):
+        self.puntos = np.array(puntos)
+    
+    def calcular_filtracion_vietoris_rips(self, r):
+        if r < 0:
+            return []
+        
+        distancias = squareform(pdist(self.puntos))
+        simplices = []
+        
+        for k in range(len(self.puntos) + 1):
+            for simplex in combinations(range(len(self.puntos)), k):
+                if simplex:  # Evita agregar el conjunto vacío
+                    # Comprobamos que todos los pares de puntos en el simplex están a una distancia <= r
+                    if all(distancias[i][j] <= r for i, j in combinations(simplex, 2)):
+                        simplices.append(list(simplex))
+        return simplices
+
+# Ejemplo de uso:
+puntos_ejemplo = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])  # Cuatro puntos formando un cuadrado
+complejo = Complejosimplicial2(puntos_ejemplo)
+filtracion_rips = complejo.calcular_filtracion_vietoris_rips(1.5)
+
+# Las filtraciones de Vietoris-Rips se devuelven como listas de índices
+print('la filtracion de vieto-rips para el conjunto de puntos [[0, 0], [1, 0], [0, 1], [1, 1]] es:', filtracion_rips)
+
+
+##############################################################
+# Práctica 3: Homología Simplicial
+
