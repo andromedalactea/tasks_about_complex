@@ -11,3 +11,8 @@ Evitar Duplicados:
 
 Al trabajar con complejos simpliciales, es importante asegurarse de que no haya duplicados en las caras. Los conjuntos (set y frozenset) son útiles porque automáticamente evitan duplicados.
 Al convertir las caras a frozenset antes de almacenarlas en un conjunto, garantizamos que cada cara sea única en la colección.
+
+Explicación del Método calcular_estrella:
+Argumento simplex_buscado: Este es el símplice del cual queremos encontrar la estrella.
+Bucle sobre self.simplices: El método recorre todos los símplices en el complejo.
+Condición if simplex_buscado.issubset(simplex): Para cada símplice en el complejo, esta condición verifica si simplex_buscado es una cara de ese símplice. Si lo es, el símplice se añade al conjunto de la estrella.
