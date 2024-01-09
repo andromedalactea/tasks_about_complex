@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import gudhi as gd 
+from scipy.spatial.distance import pdist, squareform
 
 # Practicas 1 y 3
 class ComplejoSimplicial:
@@ -199,7 +200,7 @@ class ComplejoSimplicial:
         # Determinar el número máximo de dimensiones
         max_dim = max(simplices_organizados.keys())
 
-        # Crear la matriz borde generalizada
+        # Crear la matriz borde generalizada según la definición
         bordes = []
         for dim in range(1, max_dim + 1):
             fila = []
@@ -374,7 +375,7 @@ print('las filtraciones para diferentes r para los puntos [(1, 2), (3, 4), (5, 6
 # Representación del alfa complejo 
 alfa_complejo.representar_graficamente(2)
 
-from scipy.spatial.distance import pdist, squareform
+
 
 class Complejosimplicial2:
     def __init__(self, puntos):
@@ -567,28 +568,6 @@ print("Números de Betti del primer alfa complejo:", betti_numbers_alfa1)
 betti_numbers_alfa2 = alfa_complejo2.calcular_numeros_betti()
 print("Números de Betti del segundo alfa complejo:", betti_numbers_alfa2)
 
-# Crear una instancia de ComplejoSimplicial para el ejemplo
-ejemplo = ComplejoSimplicial()
-
-# Añadir símplices para obtener [1, 1] como valores de Betti
-# Bucle en 1D
-ejemplo.añadir_simplex({0, 1}, 0)
-ejemplo.añadir_simplex({1, 2}, 0)
-ejemplo.añadir_simplex({2, 3}, 0)
-ejemplo.añadir_simplex({3, 0}, 0)
-
-# Agujero en 2D
-ejemplo.añadir_simplex({0, 1, 2}, 1)
-ejemplo.añadir_simplex({1, 2, 3}, 2)
-ejemplo.añadir_simplex({0, 2, 3}, 3)
-ejemplo.añadir_simplex({0, 1, 3}, 4)
-
-# Calcular los números de Betti para el ejemplo
-betti_numbers_ejemplo = ejemplo.calcular_numeros_betti()
-print("Números de Betti del ejemplo:", betti_numbers_ejemplo)
-
-
-
 ###########################
 ## Practica 4
 
@@ -637,9 +616,8 @@ columna_index = 2  # Por ejemplo, elige la tercera columna
 low = calcular_low_columna(matriz_ejemplo, columna_index)
 print(f"El 'low' de la columna {columna_index} es: {low}")
 
-# Reducción por columnas una matriz cuadrada según el algoritmo matricula de cálculo de persistencia.
 
-
+## Reducción por columnas una matriz cuadrada según el algoritmo matricula de cálculo de persistencia.
 def reducir_matriz(matriz):
     """
     Reduce una matriz cuadrada según el algoritmo de cálculo de persistencia.
