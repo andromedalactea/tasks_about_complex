@@ -48,6 +48,7 @@ class ComplejoSimplicial:
         return {cara for cara in self.obtener_todas_las_caras() if len(cara) - 1 == dimension}
 
 
+
     # Métodos adicionales (obtener_caras, caras_por_dimension, estrella, link, caracteristica_euler,
     # numero_componentes_conexas, ordenamiento, subcomplejo_por_filtracion) se implementarían aquí.
 
@@ -57,5 +58,9 @@ complejo.añadir_simplex({1, 2, 3}, 0.5)
 complejo.añadir_simplex({2, 3, 4}, 0.6)
 complejo.añadir_simplex({1, 2}, 0.6)
 
-print("Todas las caras del complejo:", complejo.obtener_todas_las_caras())
-print("Caras de dimensión 1:", complejo.caras_por_dimension(1))
+# Convertir frozenset a listas para una mejor visualización
+todas_las_caras = [list(cara) for cara in complejo.obtener_todas_las_caras()]
+caras_dimension_1 = [list(cara) for cara in complejo.caras_por_dimension(0)]
+
+print("Todas las caras del complejo:", len(todas_las_caras))
+print("Caras de dimensión 1:", caras_dimension_1)
