@@ -1,25 +1,26 @@
-def betti_number(self, p: int, group=None) -> int:
-        """
-        Gets the betti numbers of the simplicial complex for the given dimension p.
+import gudhi
+import numpy as np
 
-        Args:
-        p (int): dimension
-        group: group
+# Definir los vértices del borde del tetraedro como puntos en el espacio 3D
+tetrahedron_vertices = [
+    [0, 0, 0],
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1]
+]
 
-        Returns:
-        int: betti_number
-        """
-        if group is None:
-            mp = self.smith_normal_form_z(self.boundary_matrix(p, group))
-            mp_1 = self.smith_normal_form_z(self.boundary_matrix(p + 1, group))
-        else:
-            mp = self.smith_normal_form(self.boundary_matrix(p, group), group=group)
-            mp_1 = self.smith_normal_form(self.boundary_matrix(p + 1, group), group=group)
+# Crear un objeto CubicalComplex especificando los vértices
+cubical_complex = gudhi.CubicalComplex(vertices=tetrahedron_vertices)
 
-        # Number of columns of zeros
-        dim_zp = len([_ for x in np.transpose(mp) if sum(x) == 0])
+# Calcular la persistencia
+cubical_complex.compute_persistence()
 
-        # Number of rows with ones
-        dim_bp = len([_ for x in mp_1 if sum(x) != 0])
+# Especificar los valores de nacimiento y muerte para los números persistentes de Betti
+from_value = 0.0  # Valor de nacimiento
+to_value = 1.0    # Valor de muerte (considerando el borde completo)
 
-        return dim_zp - dim_bp
+# Calcular los números de Betti persistentes del borde del tetraedro
+persistent_betti_numbers = cubical_complex.persistent_betti_numbers(from_value, to_value)
+
+# Imprimir los números de Betti persistentes
+print("Números de Betti persistentes del borde del tetraedro:", persistent_betti_numbers)

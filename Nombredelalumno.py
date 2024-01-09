@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import gudhi as gd 
-# Parte 1 y 3
+
+# Practicas 1 y 3
 class ComplejoSimplicial:
     def __init__(self):
         """
@@ -216,36 +217,25 @@ class ComplejoSimplicial:
 
     def calcular_numeros_betti(self):
         """
-        Calcula los números de Betti para cada dimensión del complejo simplicial.
+        Calcula los números de Betti para el complejo simplicial.
 
-        :return: Lista con los números de Betti.
+        Returns:
+        list: Los números de Betti del complejo simplicial.
         """
-        max_dim = self.calcular_dimension()
-        betti_numbers = []
+        st = gd.SimplexTree()
 
-        # Inicializar rangos de las matrices bordes con 0
-        rangos_bordes = [0]
+        # Añadir todos los símplices al complejo simplicial
+        for simplex, _ in self.simplices:
+            st.insert(list(simplex))
 
-        # Calcular rangos de las matrices bordes para todas las dimensiones
-        for dim in range(max_dim + 1):
-            matriz_borde = self.calcular_matriz_borde(dim)
-            rango_borde = np.linalg.matrix_rank(matriz_borde) if matriz_borde.size > 0 else 0
-            rangos_bordes.append(rango_borde)
+        # Calcular la persistencia para todas las dimensiones
+        st.persistence()
 
-        # Calcular los números de Betti usando los rangos de las matrices bordes
-        for dim in range(max_dim + 1):
-            num_simplices_dim_actual = len(self.caras_por_dimension(dim))
-            betti_num = num_simplices_dim_actual - rangos_bordes[dim]
-            if dim < max_dim:
-                betti_num -= rangos_bordes[dim + 1]
-            betti_numbers.append(betti_num)
+        # Calcular y devolver los números de Betti
+        return st.betti_numbers()
 
-        return betti_numbers
 
-    # Métodos adicionales (obtener_caras, caras_por_dimension, estrella, link, caracteristica_euler,
-    # numero_componentes_conexas, ordenamiento, subcomplejo_por_filtracion) se implementarían aquí.
-
-# Ejemplo de uso
+# Ejemplo de los primeros metodos de la clase
 complejo = ComplejoSimplicial()
 complejo.añadir_simplex({1, 2, 3}, 0.4)
 complejo.añadir_simplex({2, 3, 4}, 0.45)
@@ -256,19 +246,19 @@ todas_las_caras = [list(cara) for cara in complejo.obtener_todas_las_caras()]
 caras_dimension_1 = [list(cara) for cara in complejo.caras_por_dimension(0)]
 
 print("Todas las caras del complejo:", len(todas_las_caras))
-print("Caras de dimensión 1:", caras_dimension_1)
+print("\nCaras de dimensión 1:", caras_dimension_1)
 
 # Calculando la estrella del símplice {1, 2}
 estrella_simplex = [list(s) for s in complejo.calcular_estrella({2, 3})]
-print("Estrella del símplice {1, 2}:", estrella_simplex)
+print("\nEstrella del símplice {1, 2}:", estrella_simplex)
 
 # Calculando el link del símplice {2, 3}
 link_simplex = [list(s) for s in complejo.calcular_link({2, 3})]
-print('El link del simplice {2,3} es:', link_simplex)
+print('\nEl link del simplice {2,3} es:', link_simplex)
 
 # Calcular la característica de Euler del complejo
 caracteristica_euler = complejo.calcular_caracteristica_euler()
-print('la caracteristica de euler para el complejo simplicial es:', caracteristica_euler)
+print('\nla caracteristica de euler para el complejo simplicial es:', caracteristica_euler)
 
 # Calcular subcomplejo por filtracion con un valor dado
 valor_filtracion = 0.5
@@ -457,90 +447,145 @@ print("La forma normal de Smith de la matriz es:\n", forma_normal_smith)
 
 ## Para el tetraedro
 complejo_tetraedro = ComplejoSimplicial()
+# Añadir símplices para formar un tetraedro completo
+complejo_tetraedro.añadir_simplex({0, 1}, 0)
+complejo_tetraedro.añadir_simplex({0, 2}, 0)
+complejo_tetraedro.añadir_simplex({0, 3}, 0)
+complejo_tetraedro.añadir_simplex({1, 2}, 0)
+complejo_tetraedro.añadir_simplex({1, 3}, 0)
+complejo_tetraedro.añadir_simplex({2, 3}, 0)
+complejo_tetraedro.añadir_simplex({0, 1, 2}, 0)
+complejo_tetraedro.añadir_simplex({0, 1, 3}, 0)
+complejo_tetraedro.añadir_simplex({0, 2, 3}, 0)
+complejo_tetraedro.añadir_simplex({1, 2, 3}, 0)
 
-# Añadir vértices (0-simplices)
-for v in range(1, 5):
-    complejo_tetraedro.añadir_simplex({v}, filtracion=0)
-
-# Añadir aristas (1-simplices)
-aristas = [{1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}]
-for arista in aristas:
-    complejo_tetraedro.añadir_simplex(arista, filtracion=1)
-
-# Añadir caras (2-simplices)
-caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
-for cara in caras:
-    complejo_tetraedro.añadir_simplex(cara, filtracion=2)
-
-# Calcular y mostrar los números de Betti
-numeros_betti_tetraedro = complejo_tetraedro.calcular_numeros_betti()
-print("Números de Betti del tetraedro:", numeros_betti_tetraedro)
+# Calcular los números de Betti
+betti_numbers = complejo_tetraedro.calcular_numeros_betti()
+print("\nNúmeros de Betti del tetraedro:", betti_numbers)
 
 ## Para el borde del tetraedro
-complejo_borde_tetraedro = ComplejoSimplicial()
+complejo = ComplejoSimplicial()
 
-# Añadir vértices (0-simplices)
-for v in range(1, 5):
-    complejo_borde_tetraedro.añadir_simplex({v}, filtracion=0)
+# Añadir aristas para formar el borde del tetraedro
+complejo.añadir_simplex({0, 1}, 0)
+complejo.añadir_simplex({0, 2}, 0)
+complejo.añadir_simplex({0, 3}, 0)
+complejo.añadir_simplex({1, 2}, 0)
+complejo.añadir_simplex({1, 3}, 0)
+complejo.añadir_simplex({2, 3}, 0)
 
-# Añadir aristas (1-simplices)
-aristas = [{1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}]
-for arista in aristas:
-    complejo_borde_tetraedro.añadir_simplex(arista, filtracion=1)
-
-# Añadir caras (2-simplices)
-caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
-for cara in caras:
-    complejo_borde_tetraedro.añadir_simplex(cara, filtracion=2)
-
-# Calcular y mostrar los números de Betti
-numeros_betti_borde_tetraedro = complejo_borde_tetraedro.calcular_numeros_betti()
-print("Números de Betti del borde del tetraedro:", numeros_betti_borde_tetraedro)
-
+# Calcular los números de Betti para el borde del tetraedro
+betti_numbers_borde_tetraedro = complejo.calcular_numeros_betti()
+print('\nNúmeros de Betti para el borde del tetrahedro son:',betti_numbers_borde_tetraedro)
 
 ## Para el plano proyectivo
-complejo_plano_proyectivo = ComplejoSimplicial()
+plano_proyectivo = ComplejoSimplicial()
 
-# Añadir vértices (0-simplices)
-for v in range(1, 3):
-    complejo_plano_proyectivo.añadir_simplex({v}, filtracion=0)
+# Añadir símplices para formar el plano proyectivo
+plano_proyectivo.añadir_simplex({0, 1, 2}, 0)
+plano_proyectivo.añadir_simplex({0, 1, 3}, 0)
+plano_proyectivo.añadir_simplex({0, 2, 3}, 0)
+plano_proyectivo.añadir_simplex({1, 2, 3}, 0)
 
-# Añadir aristas (1-simplices)
-aristas = [{1, 2}]
-for arista in aristas:
-    complejo_plano_proyectivo.añadir_simplex(arista, filtracion=1)
-
-# Añadir el 2-simplex (cara)
-complejo_plano_proyectivo.añadir_simplex({1, 2}, filtracion=2)
-
-# Calcular y mostrar los números de Betti
-numeros_betti_plano_proyectivo = complejo_plano_proyectivo.calcular_numeros_betti()
-print("Números de Betti del plano proyectivo:", numeros_betti_plano_proyectivo)
-
+# Calcular los números de Betti para el plano proyectivo
+betti_numbers_plano_proyectivo = plano_proyectivo.calcular_numeros_betti()
+print("\nNúmeros de Betti del plano proyectivo:", betti_numbers_plano_proyectivo)
 
 ## Para la botella de Klein
-complejo_botella_klein = ComplejoSimplicial()
+botella_klein = ComplejoSimplicial()
 
-# Añadir vértices (0-simplices)
-for v in range(1, 5):
-    complejo_botella_klein.añadir_simplex({v}, filtracion=0)
+# Añadir símplices para formar la botella de Klein con filtración
+botella_klein.añadir_simplex({0, 1, 2, 3}, 0)
+botella_klein.añadir_simplex({0, 1, 2}, 1)
+botella_klein.añadir_simplex({0, 1, 3}, 2)
+botella_klein.añadir_simplex({0, 2, 3}, 3)
+botella_klein.añadir_simplex({1, 2, 3}, 4)
 
-# Añadir aristas (1-simplices)
-aristas = [{1, 2}, {2, 3}, {3, 4}, {4, 1}, {1, 3}, {2, 4}]
-for arista in aristas:
-    complejo_botella_klein.añadir_simplex(arista, filtracion=1)
+# Calcular los números de Betti para la botella de Klein
+betti_numbers_botella_klein = botella_klein.calcular_numeros_betti()
+print("Números de Betti de la botella de Klein:", betti_numbers_botella_klein)
 
-# Añadir caras (2-simplices)
-caras = [{1, 2, 3}, {1, 2, 4}, {1, 3, 4}, {2, 3, 4}]
-for cara in caras:
-    complejo_botella_klein.añadir_simplex(cara, filtracion=2)
 
-# Añadir el 3-simplex (volumen)
-complejo_botella_klein.añadir_simplex({1, 2, 3, 4}, filtracion=3)
+## Para el anillo
+anillo = ComplejoSimplicial()
 
-# Calcular y mostrar los números de Betti
-numeros_betti_botella_klein = complejo_botella_klein.calcular_numeros_betti()
-print("Números de Betti de la botella de Klein:", numeros_betti_botella_klein)
+# Añadir símplices para formar el anillo con filtración
+# Añadir símplices exteriores del anillo
+anillo.añadir_simplex({0, 1}, 0.5)
+anillo.añadir_simplex({1, 2}, 0.5)
+anillo.añadir_simplex({2, 3}, 0.5)
+anillo.añadir_simplex({3, 0}, 0.5)
+
+# Añadir símplices interiores del anillo
+anillo.añadir_simplex({0, 1, 2}, 0.3)
+anillo.añadir_simplex({1, 2, 3}, 0.3)
+anillo.añadir_simplex({0, 2, 3}, 0.3)
+anillo.añadir_simplex({0, 1, 3}, 0.3)
+
+# Calcular los números de Betti para el anillo
+betti_numbers_anillo = anillo.calcular_numeros_betti()
+print("Números de Betti del anillo:", betti_numbers_anillo)
+
+## Para el sombrero del asno
+sombrero_asno = ComplejoSimplicial()
+
+# Añadir símplices para formar el sombrero del asno con filtración
+sombrero_asno.añadir_simplex({0, 1, 2, 3}, 0)
+sombrero_asno.añadir_simplex({0, 1, 2}, 1)
+sombrero_asno.añadir_simplex({0, 1, 3}, 2)
+sombrero_asno.añadir_simplex({0, 2, 3}, 3)
+sombrero_asno.añadir_simplex({1, 2, 3}, 4)
+
+# Calcular los números de Betti para el sombrero del asno
+betti_numbers_sombrero_asno = sombrero_asno.calcular_numeros_betti()
+print("Números de Betti del sombrero del asno:", betti_numbers_sombrero_asno)
+
+## Para los alfa complejos
+# Crear una instancia de ComplejoSimplicial para el primer alfa complejo
+alfa_complejo1 = ComplejoSimplicial()
+
+# Añadir símplices para el primer alfa complejo con filtración
+alfa_complejo1.añadir_simplex({0, 1, 2}, 0)
+alfa_complejo1.añadir_simplex({0, 1}, 1)
+alfa_complejo1.añadir_simplex({1, 2}, 2)
+alfa_complejo1.añadir_simplex({0, 2}, 3)
+
+# Crear una instancia de ComplejoSimplicial para el segundo alfa complejo
+alfa_complejo2 = ComplejoSimplicial()
+
+# Añadir símplices para el segundo alfa complejo con filtración
+alfa_complejo2.añadir_simplex({2, 3, 4}, 0)
+alfa_complejo2.añadir_simplex({2, 3}, 1)
+alfa_complejo2.añadir_simplex({3, 4}, 2)
+alfa_complejo2.añadir_simplex({2, 4}, 3)
+
+# Calcular los números de Betti para el primer alfa complejo
+betti_numbers_alfa1 = alfa_complejo1.calcular_numeros_betti()
+print("Números de Betti del primer alfa complejo:", betti_numbers_alfa1)
+
+# Calcular los números de Betti para el segundo alfa complejo
+betti_numbers_alfa2 = alfa_complejo2.calcular_numeros_betti()
+print("Números de Betti del segundo alfa complejo:", betti_numbers_alfa2)
+
+# Crear una instancia de ComplejoSimplicial para el ejemplo
+ejemplo = ComplejoSimplicial()
+
+# Añadir símplices para obtener [1, 1] como valores de Betti
+# Bucle en 1D
+ejemplo.añadir_simplex({0, 1}, 0)
+ejemplo.añadir_simplex({1, 2}, 0)
+ejemplo.añadir_simplex({2, 3}, 0)
+ejemplo.añadir_simplex({3, 0}, 0)
+
+# Agujero en 2D
+ejemplo.añadir_simplex({0, 1, 2}, 1)
+ejemplo.añadir_simplex({1, 2, 3}, 2)
+ejemplo.añadir_simplex({0, 2, 3}, 3)
+ejemplo.añadir_simplex({0, 1, 3}, 4)
+
+# Calcular los números de Betti para el ejemplo
+betti_numbers_ejemplo = ejemplo.calcular_numeros_betti()
+print("Números de Betti del ejemplo:", betti_numbers_ejemplo)
 
 
 
