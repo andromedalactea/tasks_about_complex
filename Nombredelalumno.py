@@ -526,22 +526,42 @@ alfa_complejo.representar_graficamente(2)
 
 class Complejosimplicial2:
     def __init__(self, puntos):
-        self.puntos = np.array(puntos)
-    
+        """
+        Inicializa un complejo simplicial con un conjunto dado de puntos.
+
+        :param puntos: Una lista de coordenadas que representan los puntos en el espacio.
+        """
+        self.puntos = np.array(puntos)  # Convierte los puntos en un array de NumPy para facilitar los cálculos.
+
     def calcular_filtracion_vietoris_rips(self, r):
+        """
+        Calcula la filtración de Vietoris-Rips para un radio 'r'.
+
+        La filtración de Vietoris-Rips es una técnica para construir un complejo simplicial a partir de un conjunto de puntos,
+        donde un conjunto de puntos forma un simplex si todas las distancias entre los pares de puntos en el conjunto 
+        son menores o iguales a un radio dado 'r'.
+
+        :param r: El radio para calcular la filtración del complejo simplicial.
+        :return: Una lista de símplices, donde cada simplex es representado como una lista de índices de puntos.
+        """
         if r < 0:
+            # Un radio negativo no tiene sentido en el contexto de un complejo simplicial, por lo que se devuelve una lista vacía.
             return []
         
+        # Calcula la matriz de distancias entre todos los pares de puntos.
         distancias = squareform(pdist(self.puntos))
         simplices = []
         
+        # Itera sobre todos los posibles subconjuntos de puntos para formar símplices.
         for k in range(len(self.puntos) + 1):
             for simplex in combinations(range(len(self.puntos)), k):
                 if simplex:  # Evita agregar el conjunto vacío
-                    # Comprobamos que todos los pares de puntos en el simplex están a una distancia <= r
+                    # Comprueba si todos los pares de puntos en el simplex están a una distancia <= r.
                     if all(distancias[i][j] <= r for i, j in combinations(simplex, 2)):
+                        # Si todos los pares cumplen la condición de distancia, agrega el simplex a la lista.
                         simplices.append(list(simplex))
         return simplices
+        # Devuelve la lista de todos los símplices que satisfacen la condición de distancia de Vietoris-Rips.
 
 # Ejemplo de uso:
 puntos_ejemplo = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])  # Cuatro puntos formando un cuadrado
@@ -557,29 +577,43 @@ print('la filtracion de vieto-rips para el conjunto de puntos [[0, 0], [1, 0], [
 
 
 def forma_normal_smith_z2(matriz):
-    M = np.array(matriz, dtype=np.int64) % 2  # Asegurar que la matriz esté en Z2
+    """
+    Transforma una matriz en su forma normal de Smith sobre el campo Z2.
+
+    La forma normal de Smith es una forma diagonalizada de una matriz donde los elementos fuera 
+    de la diagonal son cero, y cada elemento diagonal es un divisor del siguiente elemento diagonal. 
+    En el contexto de Z2 (números enteros módulo 2), los únicos valores posibles son 0 y 1.
+
+    :param matriz: La matriz original que se desea transformar.
+    :return: La matriz transformada en su forma normal de Smith.
+    """
+    M = np.array(matriz, dtype=np.int64) % 2  # Convertir la matriz a Z2 (valores en {0, 1}).
     filas, columnas = M.shape
 
     for i in range(min(filas, columnas)):
-        # Encontrar un elemento no nulo en la columna i y moverlo a la posición (i, i)
+        # Buscar un elemento no nulo (1 en Z2) en la columna i y moverlo a la posición (i, i).
         for j in range(i, filas):
             if M[j, i] == 1:
-                # Intercambiar filas si es necesario
+                # Intercambiar filas si es necesario para mover el elemento 1 a la posición (i, i).
                 if j != i:
                     M[[i, j]] = M[[j, i]]
                 break
         else:
-            continue  # Continuar si no se encontró ningún elemento no nulo
+            # Continuar con la siguiente columna si no se encontró ningún elemento no nulo en la columna actual.
+            continue
         
-        # Hacer cero todos los elementos fuera de la diagonal con operaciones de fila y columna
+        # Hacer cero todos los elementos fuera de la diagonal en la columna i utilizando operaciones de fila.
         for j in range(filas):
             if j != i and M[j, i] == 1:
                 M[j] = (M[j] + M[i]) % 2
+        
+        # Hacer cero todos los elementos fuera de la diagonal en la fila i utilizando operaciones de columna.
         for k in range(columnas):
             if k != i and M[i, k] == 1:
                 M[:, k] = (M[:, k] + M[:, i]) % 2
     
     return M
+    # Devuelve la matriz en su forma normal de Smith sobre Z2.
 
 # Ejemplo de uso:
 matriz_ejemplo = [
@@ -591,7 +625,7 @@ matriz_ejemplo = [
 forma_normal_smith = forma_normal_smith_z2(matriz_ejemplo)
 print("La forma normal de Smith de la matriz es:\n", forma_normal_smith)
 
-### Calculo de los numeros de Betti 
+### Calculo de los numeros de Betti para diferentes complejos simplificiales
 
 ## Para el tetraedro
 complejo_tetraedro = ComplejoSimplicial()
@@ -725,12 +759,16 @@ def calcular_numeros_betti(simplices):
 
     Devuelve:
     tupla: Una tupla que contiene los números de Betti b0 y b1.
+
+    b0: Número de componentes conectadas.
+    b1: Número de agujeros unidimensionales (ciclos).
     """
+
     # Inicialización de los números de Betti
     b0 = 0  # Número de componentes conectadas
     b1 = 0  # Número de agujeros unidimensionales (ciclos)
 
-    # Funciones auxiliares
+    # Funciones auxiliares para el algoritmo Union-Find
     def find_set(vertex, parent):
         """
         Encontrar el representante del conjunto que contiene el vértice dado.
@@ -782,6 +820,7 @@ def calcular_numeros_betti(simplices):
                 b1 += 1
 
     return b0, b1
+    # Devuelve los números de Betti b0 y b1 calculados.
 
 
 
@@ -835,16 +874,22 @@ def calcular_low_columna(matriz, columna_index):
     """
     Calcula el 'low' de una columna específica en una matriz de NumPy.
 
+    El 'low' de una columna en una matriz es el índice de la fila más baja que contiene un valor no nulo en esa columna.
+    En el contexto de la homología persistente, este concepto se utiliza para identificar cuándo un simplex 
+    (representado por una columna) 'muere' en la filtración.
+
     :param matriz: Matriz de NumPy.
     :param columna_index: Índice de la columna para calcular el 'low'.
     :return: Índice de la fila más baja con un valor no nulo, o -1 si la columna es cero.
     """
     # Revisar si la columna es completamente cero
     if np.all(matriz[:, columna_index] == 0):
+        # Si la columna es cero, entonces no hay 'low' (el simplex no 'muere').
         return -1
 
     # Encontrar el índice de la fila más baja con un valor no nulo
     filas_no_cero = np.where(matriz[:, columna_index] != 0)[0]
+    # El 'low' es el índice más alto de las filas no nulas, ya que estamos buscando la fila más baja.
     return max(filas_no_cero)
 
 # Ejemplo de uso:
@@ -864,20 +909,22 @@ def reducir_matriz(matriz):
     :return: Matriz reducida.
     """
     num_columnas = matriz.shape[1]
-    lows = [-1] * num_columnas  # Inicializa todos los 'lows' como -1
+    lows = [-1] * num_columnas  # Initialize all 'lows' to -1
 
     for j in range(num_columnas):
         while True:
+            # Calculate the 'low' for the current column 'j'
             low_j = calcular_low_columna(matriz, j)
             if low_j == -1:
-                break  # Si la columna es cero, no hay nada que reducir
+                break  # If the column is zero, there's nothing to reduce
 
             if lows[low_j] == -1:
-                lows[low_j] = j  # Actualiza el 'low' de la fila
+                lows[low_j] = j  # Update the 'low' of the row
                 break
             else:
                 q = lows[low_j]
-                matriz[:, j] = matriz[:, j] ^ matriz[:, q]  # Operación XOR para la reducción
+                # Perform XOR operation for reduction
+                matriz[:, j] = matriz[:, j] ^ matriz[:, q]  # Reduce the current column using XOR
 
     return matriz
 
