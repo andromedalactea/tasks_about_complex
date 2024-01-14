@@ -41,41 +41,83 @@ class ComplejoSimplicial:
         """
         return max(len(simplex) - 1 for simplex, _ in self.simplices)
     
+
     def obtener_todas_las_caras(self):
         """
-        Calcula el conjunto de todas las caras del complejo simplicial.
+        Calcula el conjunto de todas las caras de cada símplice en el complejo simplicial.
 
-        :return: Un conjunto con todas las caras del complejo.
+        Un "símplice" en un complejo simplicial es una estructura que generaliza la noción de un triángulo o tetraedro a cualquier número de dimensiones. 
+        Las "caras" de un símplice son todos los subconjuntos posibles de sus vértices que también forman símplices. 
+        Por ejemplo, las caras de un triángulo (2-símplice) incluyen sus tres vértices (0-símplices), sus tres aristas (1-símplices), y el triángulo en sí.
+
+        :return: Un conjunto que contiene todas las caras de todos los símplices en el complejo simplicial.
         """
         todas_las_caras = set()
         for simplex, _ in self.simplices:
+            # Itera sobre cada símplice en el complejo simplicial.
             for i in range(len(simplex)):
+                # Genera todas las combinaciones posibles de los vértices del símplice.
+                # Estas combinaciones representan todas las caras posibles del símplice.
                 for cara in combinations(simplex, i + 1):
+                    # Agrega cada cara (como un conjunto inmutable 'frozenset') al conjunto de todas las caras.
+                    # Usamos 'frozenset' porque las caras son conjuntos de vértices que no deben modificarse.
                     todas_las_caras.add(frozenset(cara))
         return todas_las_caras
 
+
     def caras_por_dimension(self, dimension):
         """
-        Calcula el conjunto de todas las caras de una dimensión dada.
+        Calcula y devuelve el conjunto de todas las caras de una dimensión específica en el complejo simplicial.
 
-        :param dimension: La dimensión de las caras a calcular.
-        :return: Un conjunto con todas las caras de la dimensión especificada.
+        En matemáticas, una "cara" de un símplice se refiere a cualquier símplice que es parte de él, incluyendo a sí mismo. 
+        Por ejemplo, en un triángulo (2-símplice), las caras de dimensión 0 son sus vértices, las caras de dimensión 1 son sus aristas, 
+        y una cara de dimensión 2 es el triángulo completo.
+
+        :param dimension: La dimensión de las caras que se desea calcular. La dimensión se refiere al número de dimensiones 
+        que tiene el símplice. Por ejemplo, 0 para puntos, 1 para líneas, 2 para triángulos, etc.
+
+        :return: Un conjunto que contiene todas las caras del complejo simplicial que tienen exactamente la dimensión especificada.
         """
         return {cara for cara in self.obtener_todas_las_caras() if len(cara) - 1 == dimension}
+        # Aquí se utiliza una comprensión de conjunto para filtrar y obtener solo las caras de la dimensión deseada.
+        # 'self.obtener_todas_las_caras()' llama a la función que genera todas las caras del complejo.
+        # 'len(cara) - 1' calcula la dimensión de cada cara. En matemáticas, la dimensión de un símplice se define como 
+        # el número de vértices que tiene menos uno. Por ejemplo, un punto (0-símplice) tiene 1 vértice, 
+        # una línea (1-símplice) tiene 2 vértices, un triángulo (2-símplice) tiene 3 vértices, y así sucesivamente.
+        # Por lo tanto, si 'len(cara) - 1' es igual a la 'dimension' dada, esa cara es de la dimensión que estamos buscando 
+        # y se incluye en el conjunto resultante.
+
 
     def calcular_estrella(self, simplex_buscado):
         """
-        Calcula la estrella de un símplice dado.
+        Calcula la "estrella" de un símplice en un complejo simplicial.
 
-        :param simplex_buscado: El símplice para el cual se calculará la estrella.
-        :return: Un conjunto con todos los símplices que forman la estrella del símplice dado.
+        En topología, la "estrella" de un símplice en un complejo simplicial se define como el conjunto de todos los símplices 
+        que contienen al símplice dado como una cara. La estrella de un símplice nos da una idea de cómo está conectado este 
+        símplice con otros símplices más grandes en el complejo.
+
+        :param simplex_buscado: El símplice para el cual se calculará la estrella. Un símplice es un conjunto de vértices, 
+        y aquí se espera que 'simplex_buscado' sea una colección de tales vértices.
+
+        :return: Un conjunto de símplices que forman la estrella del símplice dado. Cada símplice en esta estrella contiene 
+        al 'simplex_buscado' como una subestructura.
+
         """
         simplex_buscado = frozenset(simplex_buscado)
+        # Se convierte el símplice buscado en un 'frozenset' para garantizar que sea un conjunto inmutable de vértices.
+
         estrella = set()
         for simplex, _ in self.simplices:
+            # Itera sobre todos los símplices en el complejo simplicial.
             if simplex_buscado.issubset(simplex):
+                # Verifica si el 'simplex_buscado' es una cara del símplice actual.
+                # Si es así, el símplice actual es parte de la estrella del 'simplex_buscado'.
                 estrella.add(frozenset(simplex))
+                # Agrega el símplice a la estrella. Se usa 'frozenset' para mantener la inmutabilidad.
+
         return estrella
+        # Devuelve el conjunto de símplices que forman la estrella del 'simplex_buscado'.
+
     
     def calcular_link(self, simplex_buscado):
         """
@@ -108,106 +150,176 @@ class ComplejoSimplicial:
         """
         Calcula la característica de Euler de un complejo simplicial.
 
-        La característica de Euler χ(K) se define como la suma alternante del número
-        de símplices en cada dimensión, es decir, χ(K) = Σ(-1)^k * s_k,
-        donde s_k es el número de símplices de dimensión k en K.
+        La característica de Euler es un invariante topológico, una propiedad que permanece constante 
+        a pesar de la deformación continua del espacio (como estirar o comprimir, pero sin rasgar o pegar). 
+        Para un complejo simplicial K, la característica de Euler χ(K) se define como:
+        
+        χ(K) = Σ(-1)^k * s_k,
+        
+        donde s_k es el número de símplices de dimensión k en K. Esta suma alterna los signos entre las dimensiones.
 
-        :return: La característica de Euler del complejo simplicial.
+        :return: La característica de Euler del complejo simplicial. Un número entero que es un invariante topológico del complejo.
         """
         num_simplices_por_dimension = {}
         for simplex, _ in self.simplices:
-            # La dimensión de un simplex es una menos que el número de sus vértices
+            # Calcula la dimensión de cada símplice, que es una menos que el número de sus vértices.
             dim = len(simplex) - 1
+            # Cuenta el número de símplices en cada dimensión.
             if dim in num_simplices_por_dimension:
                 num_simplices_por_dimension[dim] += 1
             else:
                 num_simplices_por_dimension[dim] = 1
 
-        # Calcular la suma alternante
+        # Realiza la suma alternante para calcular la característica de Euler.
+        # La suma alterna los signos para cada dimensión (positivo para dimensiones pares, negativo para impares).
         caracteristica_euler = sum((-1)**dim * count for dim, count in num_simplices_por_dimension.items())
         return caracteristica_euler
+        # Devuelve la característica de Euler, que es un indicador importante de la topología del complejo simplicial.
+
     
     def calcular_componentes_conexas(self):
         """
-        Determina el número de componentes conexas del espacio subyacente al complejo simplicial.
+        Determina el número de componentes conexas en el espacio subyacente de un complejo simplicial.
 
-        :return: El número de componentes conexas del complejo simplicial.
+        Una "componente conexa" en topología es una subsección de un espacio topológico donde cualquier 
+        par de puntos dentro de esta subsección puede conectarse mediante un camino que permanezca 
+        completamente dentro de la subsección. En el contexto de un complejo simplicial, una componente 
+        conexa es un subconjunto de símplices donde cada par de símplices está conectado directa o 
+        indirectamente a través de otros símplices del subconjunto.
+
+        :return: El número de componentes conexas en el complejo simplicial. Este es un número entero que 
+        representa cuántas "piezas" separadas e independientes forman el complejo.
         """
-        visitados = set()
-        num_componentes_conexas = 0
+        visitados = set()  # Conjunto para marcar los vértices ya visitados en la búsqueda.
+        num_componentes_conexas = 0  # Contador para el número de componentes conexas.
 
         def dfs(v):
             """
             Realiza una búsqueda en profundidad (DFS) para marcar todos los vértices conectados a 'v'.
+
+            La búsqueda en profundidad es un algoritmo de recorrido de grafos que comienza en un vértice 
+            y explora lo más profundamente posible a lo largo de cada rama antes de retroceder, lo que 
+            es ideal para identificar componentes conexas.
             """
             if v in visitados:
-                return
-            visitados.add(v)
+                return  # Si el vértice ya ha sido visitado, no hay necesidad de explorarlo nuevamente.
+            visitados.add(v)  # Marcar el vértice actual como visitado.
             for vecino in self.grafo[v]:
-                dfs(vecino)
+                dfs(vecino)  # Explorar recursivamente todos los vecinos del vértice actual.
 
-        # Iniciar DFS en cada vértice no visitado
+        # Iniciar DFS en cada vértice no visitado para identificar todas las componentes conexas.
         for vertice in self.grafo:
             if vertice not in visitados:
-                dfs(vertice)
-                num_componentes_conexas += 1
+                dfs(vertice)  # Iniciar DFS en este vértice.
+                num_componentes_conexas += 1  # Cada llamada a DFS que inicia una nueva exploración indica una nueva componente conexa.
 
         return num_componentes_conexas
+        # Devuelve el número total de componentes conexas encontradas en el complejo simplicial.
+
     
     def subcomplejo_por_filtracion(self, valor_filtracion):
         """
-        Calcula el subcomplejo simplicial formado por todos los símplices cuyo valor de filtración
-        es menor o igual que un valor dado.
+        Genera un subcomplejo simplicial basado en un valor de filtración dado.
 
-        :param valor_filtracion: El valor de filtración máximo para incluir un simplex en el subcomplejo.
-        :return: Un nuevo complejo simplicial que contiene solo los símplices con filtración
-                 menor o igual que valor_filtracion.
+        La "filtración" en topología computacional es un proceso que construye complejos simpliciales 
+        incrementando estructuras sobre la base de algún criterio, como una medida de similitud, distancia, 
+        densidad, etc. Este proceso permite analizar la estructura topológica del complejo a diferentes 
+        'escalas' o niveles de detalle.
+
+        :param valor_filtracion: El valor de filtración máximo que se utiliza como umbral para incluir 
+        un símplice en el subcomplejo. Símplices con un valor de filtración más alto que este umbral 
+        no se incluyen en el subcomplejo.
+
+        :return: Un subcomplejo simplicial que contiene solo los símplices cuyo valor de filtración es 
+        menor o igual que el valor especificado. Este subcomplejo representa una 'vista' del complejo 
+        original a un nivel particular de filtración.
         """
-        subcomplejo = ComplejoSimplicial()
+        subcomplejo = ComplejoSimplicial()  # Inicializa un nuevo complejo simplicial vacío.
+
         for simplex, filtracion in self.simplices:
+            # Itera sobre todos los símplices en el complejo simplicial junto con sus valores de filtración.
             if filtracion <= valor_filtracion:
+                # Incluye el símplice en el subcomplejo si su valor de filtración es menor o igual al umbral dado.
                 subcomplejo.añadir_simplex(simplex, filtracion)
+                # Añade el símplice al subcomplejo.
+
         return subcomplejo
+        # Devuelve el subcomplejo simplicial resultante, que es una subestructura del complejo original 
+        # filtrada según el valor de filtración especificado.
+
     def calcular_matriz_borde(self, dimension):
+        """
+        Calcula la matriz borde de una dimensión dada en un complejo simplicial.
+
+        En topología algebraica, una "matriz borde" es una representación matricial que describe cómo 
+        los símplices de una dimensión específica se 'conectan' o 'limitan' con los símplices de la dimensión 
+        inmediatamente inferior. Esta matriz es fundamental para calcular los grupos de homología de un complejo.
+
+        :param dimension: La dimensión de los símplices para los cuales se calculará la matriz borde.
+
+        :return: Una matriz (en forma de array NumPy) donde cada fila corresponde a un símplice de dimensión (dimension-1)
+        y cada columna corresponde a un símplice de dimensión 'dimension'. Los elementos de la matriz son 0 o 1,
+        indicando si el símplice de dimensión inferior es o no una cara del símplice de dimensión superior.
+        """
+
         # Crear listas de símplices por dimensión
         simplices_d = list(self.caras_por_dimension(dimension))
         simplices_d_minus_1 = list(self.caras_por_dimension(dimension-1))
 
-        # Crear la matriz borde
+        # Crear la matriz borde inicializando todos los elementos a 0
         matriz_borde = np.zeros((len(simplices_d_minus_1), len(simplices_d)), dtype=int)
 
         # Rellenar la matriz borde
         for j, simplex in enumerate(simplices_d):
             for i, sub_simplex in enumerate(simplices_d_minus_1):
+                # Si un simplex de dimensión inferior es una cara del simplex de dimensión superior,
+                # coloca un 1 en la matriz en la posición correspondiente.
                 if sub_simplex.issubset(simplex):
                     matriz_borde[i, j] = 1
 
         return matriz_borde
+        # La matriz resultante es la matriz borde para la dimensión especificada.
+
+    
+    
     def calcular_matriz_borde_generalizada(self):
         """
-        Calcula la matriz borde generalizada para un complejo simplicial filtrado.
+        Calcula una matriz borde generalizada para un complejo simplicial filtrado.
 
-        :return: Una matriz que representa la relación borde entre símplices en diferentes dimensiones, teniendo en cuenta la filtración.
+        En un complejo simplicial filtrado, cada símplice se asocia con un valor de filtración, 
+        que generalmente representa algún tipo de medida o umbral (como la distancia, el tiempo, 
+        la densidad, etc.). Esta matriz borde generalizada tiene en cuenta no solo las relaciones 
+        topológicas de los símplices, sino también cómo estas relaciones se desarrollan a través 
+        de la filtración.
+
+        :return: Una matriz (en realidad, una lista de listas debido a la naturaleza irregular 
+        de los datos) que representa las relaciones borde entre los símplices en diferentes 
+        dimensiones, considerando sus valores de filtración.
         """
+
         # Ordenar símplices por filtración y dimensión
         self.simplices.sort(key=lambda x: (x[1], len(x[0])))
+        # Esto organiza los símplices primero por su valor de filtración y luego por su dimensión.
 
         # Crear listas de símplices organizadas por dimensión y filtración
         simplices_organizados = defaultdict(list)
         for simplex, filtracion in self.simplices:
             dim = len(simplex) - 1
             simplices_organizados[dim].append((simplex, filtracion))
+            # Agrupa los símplices por su dimensión, manteniendo su valor de filtración.
 
-        # Determinar el número máximo de dimensiones
+        # Determinar el número máximo de dimensiones en el complejo
         max_dim = max(simplices_organizados.keys())
 
-        # Crear la matriz borde generalizada según la definición
+        # Crear la matriz borde generalizada
         bordes = []
         for dim in range(1, max_dim + 1):
             fila = []
             for simplex_d, filtracion_d in simplices_organizados[dim]:
                 columna = []
                 for simplex_d_minus_1, filtracion_d_minus_1 in simplices_organizados[dim - 1]:
+                    # Verifica si un simplex de dimensión inferior es una cara del simplex de dimensión superior
+                    # y si su valor de filtración es menor o igual al del simplex de dimensión superior.
                     if simplex_d_minus_1.issubset(simplex_d) and filtracion_d_minus_1 <= filtracion_d:
                         columna.append(1)
                     else:
@@ -216,29 +328,44 @@ class ComplejoSimplicial:
             bordes.append(fila)
 
         return bordes
+        # Devuelve la matriz borde generalizada, que refleja la estructura y evolución del complejo simplicial filtrado.
+
 
     def calcular_numeros_betti(self):
         """
         Calcula los números de Betti para el complejo simplicial.
 
+        Los números de Betti son una secuencia de números enteros (β₀, β₁, β₂, ...) que representan 
+        invariantes topológicos de un espacio. En particular, β₀ representa el número de componentes 
+        conexas, β₁ el número de "agujeros" o ciclos de una dimensión, β₂ el número de "cavidades" 
+        tridimensionales, y así sucesivamente.
+
         Returns:
-        list: Los números de Betti del complejo simplicial.
+        list: Los números de Betti (β₀, β₁, β₂, ...) del complejo simplicial.
         """
-        st = gd.SimplexTree()
+
+        st = gd.SimplexTree()  # Crear un árbol de símplices, una estructura de datos para almacenar el complejo simplicial.
 
         # Añadir todos los símplices al complejo simplicial
         for simplex, _ in self.simplices:
             st.insert(list(simplex))
+            # Cada símplice se añade al árbol de símplices. Se asume que 'self.simplices' es una lista de tuplas,
+            # donde cada tupla contiene un conjunto que representa un símplice y su valor de filtración.
 
         # Calcular la persistencia para todas las dimensiones
         st.persistence()
+        # Este método calcula la homología persistente del complejo, que es necesaria para determinar los números de Betti.
 
         # Calcular y devolver los números de Betti
         return st.betti_numbers()
+        # Devuelve una lista de los números de Betti. Cada elemento de la lista corresponde a un número de Betti para
+        # una dimensión específica (empezando por la dimensión 0).
+
 
 
 # Ejemplos de los primeros metodos de la clase
 complejo = ComplejoSimplicial()
+
 complejo.añadir_simplex({1, 2, 3}, 0.4)
 complejo.añadir_simplex({2, 3, 4}, 0.45)
 complejo.añadir_simplex({1, 2}, 0.6) # Añadiendo simplices
@@ -256,7 +383,9 @@ print("\nEstrella del símplice {1, 2}:", estrella_simplex)
 
 # Calculando el link del símplice {2, 3}
 link_simplex = [list(s) for s in complejo.calcular_link({2, 3})]
+
 print('\nEl link del simplice {2,3} es:', link_simplex)
+
 
 # Calcular la característica de Euler del complejo
 caracteristica_euler = complejo.calcular_caracteristica_euler()
@@ -290,28 +419,46 @@ print("\nMatriz borde de dimensión 1 a 2:\n", matriz_borde_1)
 
 class AlfaComplejo:
     def __init__(self, puntos):
-        self.puntos = np.array(puntos)
-        self.alfa_complejo = []
+        """
+        Inicializa un AlfaComplejo con un conjunto dado de puntos.
+
+        :param puntos: Una lista de coordenadas que representan los puntos en el espacio.
+        """
+        self.puntos = np.array(puntos)  # Convierte los puntos en un array de NumPy para facilitar el cálculo.
+        self.alfa_complejo = []  # Inicializa una lista vacía para almacenar el complejo Alfa.
 
     def calcular_filtracion_alfa(self, r):
+        """
+        Calcula el complejo Alfa para un valor de radio 'r'.
+
+        En un Alfa-complejo, para un valor específico de r, incluimos en el complejo simplicial aquellos 
+        símplices cuyas esferas circunscritas tienen un radio menor o igual a r.
+
+        :param r: El radio para calcular la filtración del Alfa-complejo.
+        :return: Una lista de símplices (cada simplex representado como una lista de índices de puntos) 
+                 que forman el Alfa-complejo para el valor dado de r.
+        """
         if r < 0:
+            # Un radio negativo no tiene sentido en el contexto de un Alfa-complejo, por lo que se devuelve una lista vacía.
             return []
         elif r == 0:
-            # Cada punto es un simplex de 0 dimensiones por sí mismo
+            # Cuando r es 0, el Alfa-complejo solo consiste en los puntos individuales.
+            # Cada punto es considerado un simplex de 0 dimensiones.
             return [[i] for i in range(len(self.puntos))]
         else:
-            # Calcular el complejo simplicial de Delaunay para r suficientemente grande
+            # Para r positivo, se calcula el complejo simplicial de Delaunay, que es la base para formar el Alfa-complejo.
             try:
                 delaunay = Delaunay(self.puntos)
-                # Obtener los índices de los puntos que forman cada simplex del complejo de Delaunay
+                # Se obtienen los símplices de la triangulación de Delaunay, que forman la base del Alfa-complejo.
+                # Cada simplex está representado como una lista de índices de puntos.
                 return [list(simplice) for simplice in delaunay.simplices]
             except :
-                # Manejo de error si los puntos son colineales o coplanares
-                
+                # Manejo de error: si los puntos son colineales o coplanares, la triangulación de Delaunay no se puede calcular.
+                # Esto puede ocurrir, por ejemplo, si todos los puntos están en una misma línea o en un mismo plano.
                 print("Los puntos podrían ser colineales o coplanares, lo que impide calcular la triangulación de Delaunay.")
                 return None
             
-    def representar_graficamente(self, r, guardar_archivo=False, nombre_archivo="alfa_complejo.png"):
+    def representar_graficamente(self, r, guardar_archivo=True, nombre_archivo="alfa_complejo.png"):
         """
         Representa gráficamente el alfa complejo para un valor de r dado y opcionalmente lo guarda.
 
@@ -829,7 +976,7 @@ def visualizar_curva_y_analisis(curva, titulo):
     dibujar_codigos_de_barras(diagrama, axs[2])
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'{titulo}.png')
 
 # Visualizar cada curva con su análisis
 visualizar_curva_y_analisis(circunferencia, "Circunferencia")
